@@ -1,0 +1,747 @@
+<!-- <p>editor-page works!</p> -->
+
+<div class="ck-editor-wrapper">
+    <ckeditor 
+        class="editorStyle"
+        [config]="config" 
+        [data]="msg" 
+        [editor]="Editor"
+        [style]="{'height':'150px'}" 
+        [(ngModel)]="formEditorData" 
+        name="messageBodyEditor"
+        (click)="editorClick($event)" 
+        (change)="getMessageBody($event)"
+        (dblclick)="openLInkByDoubleClick($event)" 
+        (ready)="readyEditorEvent($event)"
+        id="editor_ck"
+        >
+    </ckeditor>
+    <!--  
+        (click)="getContentMessageBody($event)"(focus)="getContentFocusMessageBody($event)"-->
+    <p-button styleClass="margin-right: 3px;margin-left: 3px;"s
+        styleClass="p-button-outlined p-button-rounded" type="button"
+        (click)="populationMethod()" id="showPopulation_Editor" hidden>Add Population</p-button>
+    <p-button styleClass="margin-right: 3px;margin-left: 3px;"
+        styleClass="p-button-outlined p-button-rounded" type="button"
+        (click)="removePopulation()" id="removePopulation_Editor" hidden>Remove Population</p-button>
+
+        <p-button styleClass="margin-right: 3px;margin-left: 3px;"
+        styleClass="p-button-outlined p-button-rounded" type="button"
+        (click)="showOverlaypanel()" id="showOverlay_Panel" hidden>Overlay</p-button>
+
+</div>
+
+<!-- Show population dialog-->
+
+<!-- Show link Dialog and button -->
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="showLinkDialog()" id="showLinks_Editor" hidden>Link</p-button>
+
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="showUnLink($event)" id="showUnLinks_Editor" hidden>Un-Link</p-button>
+<!-- <p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="openLInkByDoubleClick()" id="openLinkOnDoubleClick_Editor" hidden>Open Link on Double Click</p-button> -->
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="openLinks()" id="openExternalLinks_Editor" hidden>Open Link on Double Click</p-button>
+
+<!-- Link Dialog Code-->
+<p-dialog [modal]="true" [(visible)]="linkDialog" [style]="{ width: '50vw' }" header="Choose a Link" (onHide)="cancelLinkDialog()">
+    <div>
+        <div>
+            <div >
+                <div >
+                    <div>
+                        <dl>
+                            <dt>Alight Worklife Pages</dt>
+                            <!-- <dt><a (click)="openSSODialog()">Upoint ot single sign On (SSO)</a></dt> -->
+                            <dt><a (click)="openSSODialog()">Predefined Pages</a></dt>
+                        </dl>
+                    </div>
+                    <div>
+                        <dl>
+                            <dt>External Sites</dt>
+                            <dt><a (click)="openExternalLinkDialog('public')">Public websites</a></dt>
+                            <dt><a (click)="openExternalLinkDialog('intranet')">Intranet</a></dt>
+                        </dl>
+                    </div>
+                    <div>
+                        <dl>
+                            <dt>Documents</dt>
+                            <dt><a (click)="openDialogForDocument('Document')">Existing Document</a></dt>
+                            <dt><a (click)="openDialogForDocument('New Document')">New Document</a></dt>
+                        </dl>
+                    </div>
+                </div>
+            </div> 
+        </div>
+
+    </div>
+</p-dialog>
+<!--- Extenal Links Dialog  -->
+<p-dialog [modal]="true" [(visible)]="publicDialog" (onHide)="cancelExternalSiteDialog()" [style]="{ width: '80vw' }" [header]="externalLinkHeader">
+    <div>
+        <div>
+            <div  >
+                <div >
+                    <!-- <p-listbox [options]="cities" [(ngModel)]="selectedCity" optionLabel="name" [style]="{'width':'15rem'}"></p-listbox> -->
+                    <div *ngIf="intranet" class="align-items-center">
+                       <b>Note: </b> When an employee clicks on an intranet link, a message will let them know they need to be connected to that network to successfully continue
+                    </div>
+                    <br>
+                    <div class="flex flex-column gap-2">
+                        <label htmlFor="url"  [ngClass]="{'text-darkgreen':  publicUrlError}"><b>URL</b></label>
+                        <input pInputText [(ngModel)]="publicUrl"
+                        name="publicUrl" style="width: 250px;"  pInputText />
+                        <span *ngIf="publicUrlError" style="color: red;">Enter URL to continue.</span>
+                    </div>
+                    <div class="flex flex-column gap-2">
+                        <label htmlFor="organization"><b>Organization Name(Optional) <sup>1</sup></b></label>
+                        <input pInputText [(ngModel)]="organizationName"
+                        name="organizationName" style="width: 250px;"  pInputText >
+                    </div>
+                    
+                    <br>
+                </div>
+                <br>
+                <div class="card flex justify-content-left pt-2 pb-2">
+                    <sub>1</sub>Enter the third-party organization to inform users the destination of the link.
+                    
+                </div>
+            </div> 
+            <br><br>
+            <div>
+                <p-button styleClass="p-button-rounded p-button-outlined mt-2" (click)="cancelExternalSiteDialog()"
+                label="Cancel"></p-button>&nbsp;
+                <p-button styleClass="p-button-rounded mt-2" (click)="setPublicLink()" id="saveExternalLink_EditorValue"
+                    label="Continue" ></p-button>
+            </div>
+        </div>
+
+    </div>
+</p-dialog>
+
+<!--     New Document Dialog    -->
+
+<p-dialog [modal]="true" [(visible)]="newDocumentDialog" [style]="{ width: '80vw' }" [header]="documentHeader">
+    <div id="uploadDocForm">
+        <!-- Add code for the create page -->
+        <div *ngIf="notvalidForm" class="error-box card flex  gap-3 justify-content-left">
+            <i class="pi pi-exclamation-triangle" style="font-size: 14px"></i>
+            Correct the errors on this page
+        </div>
+            <div class="xl:col-12 lg:col-12 md:col-12 col-12 mb-12 pl-0">
+                <form [formGroup]="uploadDocumentForm" (ngSubmit)="saveNewDocument()">
+                    <div class="xl:col-12 lg:col-12 md:col-12 col-12 mb-12 pl-0">
+                        <div class="xl:col-12 lg:col-12 md:col-12 col-12 mb-12 pl-0">
+                            <h3>Language</h3>
+                            <p-card>
+                                <li class="list-header control-gap" style="list-style-type: none;">
+                                    <span [ngClass]="{'has-error':isFieldValid('documentLanguage')}"
+                                        class="label-control-gap"><b>Language</b></span>
+                                    <div class="card flex  gap-3 justify-content-left pt-2">
+                                        <p-dropdown placeholder="Choose one" formControlName="documentLanguage" [options]="lang"
+                                            optionValue="languageCode" optionLabel="displayLanguageText"
+                                            ></p-dropdown>
+                                    </div>
+                                    <app-field-error-display [displayError]="isFieldValid('documentLanguage')"
+                                        errorMsg="Choose a language to continue."></app-field-error-display>
+                                </li>
+                            </p-card>
+        
+                            <h3>Document & Title</h3>
+                            <p-card>
+                                <ul class="form-item pl-0">
+                                    <li class="list-header control-gap" style="list-style-type: none;">
+                                        <span [ngClass]="{'has-error':invalidFile || isFieldValid('uploaded_file')}"
+                                            style="margin-right: 1%;"><b>Upload Document (5 MB limit)</b></span>
+                                        <div class="card flex justify-content-left pt-2 pb-2">
+                                            <input type="file" class="p-inputtext" formControlName="uploaded_file" pInputText
+                                                placeholder="No file chosen" style="width: 100%;" (change)="handleFile($event)"
+                                                accept=".doc, .docx, .xls, .xlsx, .xlsm, .ppt, .pptx, .pdf" />
+                                        </div>
+                                        <em class="control-footer"><b>Supported file types:</b> .doc, .docx, .xls, .xlsx, .xlsm, .ppt, .pptx, .pdf</em>
+                                        <br />
+                                        <app-field-error-display [displayError]="isFieldValid('uploaded_file')"
+                                        errorMsg="Upload a document to continue."></app-field-error-display>
+                                        <!-- <app-field-error-display [displayError]="isDocFieldValid('uploaded_file') || invalidFile"
+                                            errorMsg="Upload a document to continue."></app-field-error-display>
+                                        <em class="control-footer"><strong>Supported file types:</strong> .doc, .docx, .xls,
+                                            .xlsx, .xlsm, .ppt, .pptx, .pdf</em> -->
+                                    </li>
+                                    <br>
+                                    <li class="list-header control-gap" style="list-style-type: none;">
+                                        <span [ngClass]="{'has-error':isFieldValid('documentTitle')}" class="label-control-gap">
+                                            <b>Title</b> </span>
+                                        <div class="card flex justify-content-left pt-2">
+                                            <input type="text" [maxlength]="titleTextLength" class="p-inputtext"
+                                                formControlName="documentTitle" name="documentTitle"
+                                                (input)="changeTitleCount()" style="width: 100%;" pInputText>
+                                        </div>
+                                        <em class="control-footer">{{ titleTextPending }} characters left</em>
+                                        <app-field-error-display [displayError]="isFieldValid('documentTitle')"
+                                            errorMsg="Enter title to continue."></app-field-error-display>
+                                    </li>
+                                </ul>
+                            </p-card>
+                            
+        
+                            <h3>Search Criteria</h3>
+                            <p-card>
+                                <ul class="form-item pl-0">
+                                    <li class="list-header control-gap" style="list-style-type: none;">
+                                        <span class="label-control-gap"> <b> Search Tags (optional) </b> </span>
+                                        <div class="pt-2 flex justify-content-left">
+                                            <p-chips separator="," [addOnTab]="true" [addOnBlur]="true"
+                                                (keydown)="onKeyDown($event)" formControlName="searchTags" 
+                                                (onAdd)=checkInput($event)></p-chips>
+                                        </div>
+                                        <br>
+                                        <em class="control-footer">Add search tags to improve the relevancy of search results.
+                                            Type your one-word search tag and then press Enter.</em>
+                                        <br>
+                                        <br>
+                                        <em class="control-footer"><strong>Note:</strong> Special characters such as (&, #, @,
+                                            +, /, %, >, <, [, ], \) are not allowed.</em>
+                                    </li>
+                                    <br>
+                                    <li class="list-header control-gap" style="list-style-type: none;">
+                                        <span [ngClass]="{'has-error':isFieldValid('documentDescription')}"
+                                            class="label-control-gap"> <b>Description</b> </span>
+                                        <div class="card flex justify-content-left pt-2">
+                                            <textarea rows="5" cols="30" pInputTextarea style="width: 100%;"
+                                                formControlName="documentDescription"></textarea>
+                                        </div>
+          
+                                        <app-field-error-display [displayError]="isFieldValid('documentDescription')"
+                                            errorMsg="Enter a description to continue."></app-field-error-display>
+                                    </li>
+                                    <br>
+                                    <li class="list-header control-gap" style="list-style-type: none;">
+                                        <span class="label-control-gap"> 
+                                                <button *ngIf="!categoryFlag"  style="width: 20px;height: 20px;" class="p-button-rounded" pButton type="button"
+                                                    (click)="openCategory()">
+                                                    <i class="fa-solid fa-plus"></i>
+                                                </button>
+                                                <button *ngIf="categoryFlag" style="width: 20px;height: 20px;" class="p-button-rounded" pButton type="button"
+                                                    (click)="openCategory()">
+                                                    <i class="fa-solid fa-minus"></i>
+                                                </button> &nbsp;
+                                            <b>Categories (optional)</b> </span>
+                                            
+                                            <div *ngIf="categoryFlag" style="padding-top: 20px;">
+                                                <div>
+                                                    <div class="flex flex-column gap-2">
+                                                        <div *ngFor="let category of categories; let i = index" class="field-checkbox">
+                                                            <p-checkbox name="group" [value]="category"  formControlName="categories"
+                                                             [inputId]="category" (click)="selectCategory(category, i)" ></p-checkbox> 
+                                                            <label [for]="category">{{ category }}</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <!-- <div class="pt-1" *ngIf="selectedCategories">{{selectedCategories}}</div> -->
+                                        <!-- add code here for the static or dyanimic checkbox -->
+                                       <br>
+                                        <em class="control-footer"><strong>Note:</strong> Categories apply to both search and
+                                            Content Library.</em>
+                                    </li>
+                                </ul>
+                            </p-card>
+                            <h3>Content Library</h3>
+                            <p-card>
+                                <li class="list-header" style="list-style-type: none;">
+                                    <p>To make this document accessible in the Content Library, check the box.</p>
+                                    <p-checkbox class="pr-2" label="Access from Content Library (optional)"
+                                        [formControl]="$any(uploadDocumentForm).controls['includeInContentLibrary']"
+                                        [binary]="true">
+                                    </p-checkbox>
+                                    <p
+                                        *ngIf="$any(uploadDocumentForm).controls['includeInContentLibrary'].hasError('invalidName')">
+                                        Special characters not allowed!</p>
+                                </li>
+                            </p-card>
+                            <h3>UPoint Link</h3>
+                            <p-card>
+                                <li class="list-header " style="list-style-type: none;">
+                                    <p>To link to this document from a UPoint link rather than content(i.e., Tips & News or Tile) check the box.</p>
+                                    <p-checkbox class="pr-2" label="Link to Document From a UPoint Link (optional)"
+                                        [formControl]="$any(uploadDocumentForm).controls['includeInContentLibrary']"
+                                        [binary]="true">
+                                    </p-checkbox>
+                                </li>
+                            </p-card>
+        
+                            <h3>Top Search Result</h3>
+                            <p-card>
+                                <li class="list-header control-gap" style="list-style-type: none;">
+                                    <p-checkbox class="pr-2" label="Top Search Result (optional)"
+                                        [formControl]="$any(uploadDocumentForm).controls['topSearchResult']" [binary]="true">
+                                    </p-checkbox>
+                                    <br>
+                                    <br>
+                                    <em class="control-footer">If this document matches a user's search criteria, checking this
+                                        box makes it eligible to appear towards the top of all listed search results.</em>
+                                </li>
+                            </p-card>
+                            <br>
+                            <br>
+                            <em class="control-footer"><strong>Note:</strong> Updates will not be reflected in Alight Worklife search results in QA/QC until tomorrow.</em>
+                        </div>
+                        <div>
+                            <button class="p-button-rounded p-button-outlined" pButton type="button"
+                            (click)="newDocumentDialog = false; newDocumentFlag = false">Cancel</button>&nbsp;
+                            <button class="p-button-rounded mt-2" pButton type="button" [disabled]="startUploading" (click)="saveNewDocument()">Continue</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+        </div> 
+
+    
+</p-dialog>
+
+<!-- HTMl code for Uploading new image -->
+
+<p-dialog [modal]="true" [dismissableMask]="true" [(visible)]="showOverlay" [showHeader]="false" [style]="{ width: '25vw' }">
+    <dl>
+        <dt class="mb-2"><a style="cursor: pointer;" (click)="openDialogForImage(1)">Choose Existing</a></dt>
+        <dt><a style="cursor: pointer;" (click)="openDialogForImage(0)">Upload New</a></dt>
+    </dl>
+</p-dialog>
+
+<p-dialog [modal]="true" [(visible)]="showImageUploadDialog" [header]="imageHeader"
+
+(visibleChange)="onBeforeDialogHide()"
+(onAfterHide)="onAfterHideCheck()" [style]="{ width: '70vw' }">
+  
+
+<div class="existingImages" *ngIf="existingImageDialog" >
+    <div class="grid">
+        <!-- <input type="text" name="text" class="search-box" placeholder="Search image name" [(ngModel)]="searchTerm" > -->
+        <!-- <input type="text" name="text" class="search-box" placeholder="Search image name" >
+        <button id="search-button" (click)="searchFiles()"><i class="fa fa-search"></i></button> -->
+
+        <div class="search-main col-6">
+            <div class="search-input">
+                <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input name="searchString" name="querystriing" ngModel #search [(ngModel)]="searchTerm"
+                        pInputText style="padding-left: 50px;outline: none;" placeholder="search Image"
+                        type="text" />
+                </span>
+                <i (click)="clearImageSearch()" style="cursor: pointer; padding-right: 1rem;" aria-label="Clear"
+                    class="pi pi-times clear-input" *ngIf=showClearImageSearch></i>
+                
+            </div>
+            <button class="p-button-rounded p-button-outlined" [disabled]="searchTerm === ''" label="Search"
+                pButton type="button" (click)="SearchImageByTitle()" ></button>
+        </div>
+    </div>
+
+        <br>
+
+    <!-- <div *ngIf="isVisibleImage" class="thumbnail-container">
+        <div class="thumbnail" *ngFor="let image of images; let i = index"  [class.selected]="i=== selectedImageIndex" (click)="selectImage(i)">
+            <img [src]="image.file" [alt]="image.filename"/>
+            {{image.filename}}
+        </div>
+    </div> -->
+    <div *ngIf="existingImagesLoader" class="loading-table-data text-center"><span class="pr-2">Loading</span> <i class="pi pi-spin pi-spinner" style="font-size: 1rem"></i></div>
+    <div class="table-container" *ngIf="!existingImagesLoader">
+        <p-table [rows]="30" [value]="existinguploadedImages" [paginator]="true" #dt2 [resizableColumns]="true"
+            class="super-table " [ngClsass]="{'grid': existinguploadedImages.length>0}" responsiveLayout="stack" sortMode="single">
+            <ng-template pTemplate="header">
+            </ng-template>
+            <ng-template pTemplate="body" let-image let-i="rowIndex">
+                <div class="col-2 image-item-wrapper"  [class.selected]="image.serverFilePath === selectedImageIndex" >
+                <div class="thumbnail"  >
+                    <a (click)="selectImage(image, i)" style="cursor:pointer"><img [src]="image.serverFilePath" [alt]="image.title"/></a>
+                    {{image.filename}}
+                </div>
+            </div>
+                <!-- <tr>
+                    <td> 
+                        
+                    </td>
+                </tr> -->
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr style="width: 100%">
+                        <h3 class="text-center">No result found.</h3>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+    <br>
+    <!-- <div *ngIf="searchTerm !== ''">
+        <ul>
+            <button (click)="clearSearch()">clear search</button>
+        </ul>
+    </div> -->
+   
+</div>
+
+<form [formGroup]="uploadContentImageForm"  enctype="multipart/form-data">
+    <div *ngIf="existingImageDialog" >
+        <input type="text" name="" id="selectedImageData" formControlName="existingSelectedImage" style="display: none;">
+        <app-field-error-display [displayError]="isFieldValidForImage('existingSelectedImage')" errorMsg="Choose an image."></app-field-error-display>
+    </div>
+    <div *ngIf="newImageDialog" >
+        <ul>
+            <li>Accepted file types: .jpg, .jpeg, .png, .gif(250 KB limit)</li>
+            <li>Image should not contain text</li>
+        </ul>
+        <br />
+    <!-- <p-fileUpload mode="basic" chooseLabel="Choose File" name="image" accept="image/*" maxFileSize="250000" (onUpload)="onUpload($event)"></p-fileUpload> -->
+    
+                                <span  class="documentFormTitles" [ngClass]="{'has-error':invalidFile || isDocFieldValidForImage('uploadedImageForEditor')}"
+                                        style="margin-right: 1%;"><b>Upload Document (250 KB limit)</b></span>
+                                    <div class="card  justify-content-left pt-2 pb-2">
+                                        <input type="file" class="p-inputtext inputStyles" formControlName="uploadedImageForEditor" pInputText 
+                                            placeholder="No file chosen"(change)="handleUploadedImageFile($event)"
+                                            accept=".jpg, .jpeg, .png, .gif" />   
+                                    <p class="mt-1 mb-0">
+                                        <em class="control-footer"><strong>Supported image types:</strong> .jpg, .jpeg, .png, .gif</em>  
+                                    </p>  
+                                    </div>
+                                    <app-field-error-display [displayError]="isDocFieldValidForImage('uploadedImageForEditor')"
+                                    errorMsg="Upload an Image to continue."></app-field-error-display>
+                                    <app-field-error-display [displayError]="invalidFile"
+                                    errorMsg="Choose an Image less than 250KB."></app-field-error-display>
+                                <img [src]="selectedImagePreview" *ngIf="selectedImagePreview" alt="Selected Image" srcset="">
+    <!-- <p>Supported image types: .jpg, .jpeg, .png, .gif</p>  -->
+    
+
+        <br>
+
+        <h2>Image details</h2>
+        <h4>Image Name</h4>
+        <textarea  class="textAreaInput" pInputTextarea formControlName="textValueName" (input)="getNameCharLength()" id="name" cols="40" rows="1" [maxlength]="imageNameMaxLength"></textarea>
+        <app-field-error-display [displayError]="isFieldValidForImage('textValueName')" errorMsg="This field is required."></app-field-error-display>
+        <br>
+        <p class="remaining">({{remainingCharacters}} character remaining)</p>
+        <br>
+</div>
+<div>
+<h2 *ngIf="existingImageDialog" class="mb-2" >Image details</h2>
+<h3>Width of Body Content</h3>
+<p>This percentage determines how the image displays. If the image should be one third 
+of body content's width, for example, enter 33% in this field.
+</p>
+
+<label class="percent-label">
+<input type="number" name="withforCrop" (keypress)="isNumberKey($event)" maxlength="3" (keyup)="validateNo($event)" id="withforCrop" formControlName="withforCrop" ><span>%</span>
+</label>
+<p>From 1 to 100%</p>
+<app-field-error-display [displayError]="isFieldValidForImage('withforCrop')" errorMsg="Enter a percentage with a value of 1 to 100%."></app-field-error-display>
+</div>
+
+<div>
+<h3>Text Wrap</h3>
+<label>
+<input type="radio" value="block" formControlName="textWrap" name="textWrap" id="textWrap">Wrap Text Around Image
+</label>
+<br>
+<label>
+<input type="radio" value="inline" formControlName="textWrap" name="textWrap" id="notextWrap">Don't Wrap Text
+</label>
+</div>
+
+<div>
+<h3>Alignment</h3> 
+<p-dropdown placeholder="--Choose One--" [options]="alignment" name="alignment" formControlName="alignment"
+ ></p-dropdown>
+<app-field-error-display [displayError]="isFieldValidForImage('alignment')" errorMsg="Choose an alignment option."></app-field-error-display>
+</div>
+
+<div>
+<h3>Alternative Text (Optional)</h3>
+<textarea pInputTextarea formControlName="alternateTextValue"  [maxLength]=200 (input)="getAlternateTextLenth()" cols="40" rows="2"></textarea>
+<p class="remaining">({{remainingText}} character remaining)</p>
+</div>
+<div class="card flex  gap-2 justify-content-left mt-2">
+    <button pButton  class="p-button-rounded p-button-outlined" (click)="closeDialog()" label="Cancel"></button>
+    <button pButton *ngIf="!replaceImage" class="p-button-rounded" type="submit" label="Continue" [disabled]="uploadButtonDisabled" (click)="onContinueToUploadImage()"></button>
+    <button *ngIf="replaceImage" pButton class="p-button-rounded" type="submit" label="Continue" [disabled]="uploadButtonDisabled" (click)="onContinueToUploadImage()"></button>
+
+
+</div>
+</form>
+</p-dialog>
+
+<!-- Code for Uploading image from existing images -->
+
+<!-- 
+<p-dialog [modal]="true" [(visible)]="existingImageDialog" header="Choose Existing Image">
+
+    <div class="existingImages" *ngIf="existingImageDialog">
+        <div>
+            <input type="text" name="text" class="search-box" placeholder="Search image name" [(ngModel)]="searchTerm" >
+            <button id="search-button" (click)="searchFiles()"><i class="fa fa-search"></i></button>
+        </div>
+
+            <br>
+
+        <div *ngIf="isVisibleImage" class="thumbnail-container">
+            <div class="thumbnail" *ngFor="let image of images; let i = index"  [class.selected]="i=== selectedImageIndex" (click)="selectImage(i)">
+                <img [src]="image.file" [alt]="image.filename"/>
+                {{image.filename}}
+            </div>
+        </div>
+        <br>
+        <div *ngIf="searchTerm !== ''">
+            <ul>
+                <button (click)="clearSearch()">clear search</button>
+            </ul>
+        </div>
+        <input type="file" name="" id="fileInput" style="display: none;" (change)="handleFileInput($event)">
+</div>
+<br>
+
+<h2>Image details</h2>
+<div>
+<h3>Width of Body Content</h3>
+<p>This percentage determines how the image displays. If the image should ne one third 
+of body content's width, for example, enter 33% in this field.
+</p>
+<label class="percent-label">
+<input type="text" name="" id=""><span>%</span>
+</label>
+
+<p>From 1 to 100%</p>
+</div>
+
+<div>
+<h3>Text Wrap</h3>
+<label>
+<input type="radio" value="Wrap Text Around Image" id="">Wrap Text Around Image
+</label>
+<br>
+<label>
+<input type="radio" value="Don't Wrap Text" id="">Don't Wrap Text
+</label>
+</div>
+
+<div>
+<h3>Alignment</h3> 
+<p-dropdown placeholder="--Choose One--" [options]="alignment" name="alignment"></p-dropdown>
+</div>
+
+<div>
+<h3>Alternative Text(Optional)</h3>
+<textarea  pInputTextarea [(ngModel)]="alternateTextValue"  [maxLength]=200 (input)="getAlternateTextLenth()" cols="40" rows="2"></textarea>
+<p>{{note1}}</p>
+</div>
+<div>
+<button pButton class="p-button-rounded" (click)="onContinue()"
+label="Continue"></button>
+<button pButton  class="p-button-rounded p-button-outlined cancel" (click)="closeDialog()"
+label="Cancel"></button>
+</div>
+</p-dialog> -->
+
+
+<!-- Population Selection Popup -->
+<p-dialog header="Choose Population" [(visible)]="populationsDialog"  [modal]="true" [maximizable]="true" [style]="{width: '70vw'}">
+
+<population-index *ngIf="populationsDialog"
+
+[selectedReceivedPopulation]="selectedPopulation"
+
+(returnSelectedPopulation)="getSelectedPopulation($event)"
+
+(returnClosepulation)="getClosepulation($event)"
+
+></population-index> 
+
+</p-dialog>
+
+<!-- Existing document popup -->
+
+<p-dialog [modal]="true" (onHide)="cancelExistingDocumentDialog()" [(visible)]="documentDialog" [style]="{ width: '80vw' }" [header]="documentHeader">
+    <div>
+        <div>
+            <div>
+                <div class="searchcontainer xl:col-12 lg:col-12 md:col-12 col-12">
+                    <div class="xl:col-8 lg:col-8 md:col-8 col-12 ">
+                        <!-- <app-advanced-search primaryFilterCol="name" (searchEvent)="search($event)"></app-advanced-search> -->
+                        <app-advanced-search *ngIf="dataForFilter.length>0" primaryFilterCol="name" [allData]="dataForFilter"
+                            [populationFilter]="populationFilter" [allLanguagesList]="languagesList"  [typeFilter]="typeFilter" [locateFilter]="locateFilter"
+                            (searchResult)="search($event)"></app-advanced-search>
+                    </div>
+                </div>
+                <div *ngIf="!newDocumentFlag" aria-describedby="Existing Document">
+                    <div *ngIf="documentSummaryDataLoader" class="loading-table-data text-center"><span class="pr-2">Loading</span> <i class="pi pi-spin pi-spinner" style="font-size: 1rem"></i></div>
+                    <!-- Adding the table code for summary page -->
+                    <div *ngIf="!documentSummaryDataLoader">
+                        
+                        <p-table [paginator]="true" [rows]="10" [showCurrentPageReport]="false" [showJumpToPageDropdown]="true"
+                            [showPageLinks]="false" [value]="documentSummaryData"  #dt [alwaysShowPaginator]="false"
+                            class="super-table" responsiveLayout="stack">
+                            <ng-template pTemplate="body" let-doc>
+                                <tr>
+                                    <td [style]="{'height': '100px', 'justify-content': 'normal'}">
+                                        <div class="align-items-center wrapper-doc-item flex">
+                                        <div>
+                                            <p-radioButton [inputId]="doc.fileId" name="fileId" 
+                                            [(ngModel)]="selectedFileTitle" [value]="doc.title" [style]="{'width': '5px;'}"></p-radioButton>
+                                        </div>
+                                        <div style="padding-left: 50px;">
+                                            <b>{{doc.title}}</b><br>
+                                            <!-- <b>Population:</b> {{doc.population | slice: 0:8}} <br> -->
+                                            <b>Population:</b> {{doc.population }} <br>
+                                            <b>Language:</b> {{returnLanguageName(doc.locale)}} <br>
+                                            <b>File Type:</b> {{doc.fileType}} 
+                                        </div>
+                                    </div>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td colspan="8">
+                                        <h3 class="text-center">No results found.</h3>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                </div>
+                <!-- <div *ngIf="newDocumentFlag" for="new Document">
+                    <documents-wc></documents-wc>
+                </div> -->
+            </div> 
+            <br>
+            <div>
+                <p-button styleClass="p-button-rounded p-button-outlined mr-2" (click)="cancelExistingDocumentDialog()"
+                    label="Cancel"></p-button>
+                <p-button styleClass="p-button-rounded" (click)="setDocumentLink()" id="saveDocumentLink_EditorValue"
+                    label="Continue"></p-button>
+            </div>
+        </div>
+
+    </div>
+</p-dialog>
+
+
+<!-- Predefined Pages -->
+<p-dialog [modal]="true" (onHide)="cancelPredefinedDialog()" [(visible)]="ssoDialog" [style]="{ width: '70vw' }"  header="Choose a Predefined Link" >
+    <div *ngIf="!isloadedPredefinedPages" class="loading-table-data text-center"><span class="pr-2">Loading</span> <i class="pi pi-spin pi-spinner" style="font-size: 1rem"></i></div>
+
+    <predefined-pages-links *ngIf="ssoDialog && isloadedPredefinedPages" [receivedValue]="selectedPredefinedList" [allData]="allPredefinedData" [pagesList]="allPredefinedLinks" (popupCloseStatus)="popupCloseStatus($event)" (selectedPredefinedPage)="selectpredefinedLinkListValue($event)" ></predefined-pages-links>
+</p-dialog>
+    <!-- <div class="grid">
+        <div class="xl:col-8 lg:col-8 md:col-8 col-12 ">
+            <search-population primaryFilterCol="name" [isPreLink] = 'isPreLink' [baseClientFilter] = "baseClientFilter"
+             [allData]="allPredefinedData" 
+            [populationFilter]="domainFilter"  [statusFilter]="pageTypeFilter" (searchResult)="searchPredefinedPage($event)"
+                ></search-population>
+        </div>
+    </div>
+    <div>
+        <p-table #dt [value]="allPredefinedLinks" 
+             dataKey="uniqueId" [paginator]="true" [rows]="5" [responsive]="true">
+        
+            <ng-template pTemplate="body" let-predefinedlinklist>
+                
+                <tr style="font-size: 14px;">
+                    <td style="width: 5px;">
+                        <div>
+                            <p-radioButton [inputId]="predefinedlinklist.uniqueId" name="uniqueId" 
+                            [(ngModel)]="selectedPredefinedList" [value]="predefinedlinklist" [style]="{'width': '5px;'}"></p-radioButton>
+                        </div>
+                    </td>
+                    <td>
+                        <b>{{ predefinedlinklist.predefinedLinkDescription }}</b>
+                        <br> <b>Link Item Name: </b>
+                        {{ predefinedlinklist.predefinedLinkName}}
+                        <br><b>Base / Client Specific: </b>
+                        {{ predefinedlinklist.baseOrClientSpecific}}
+                        <br><b>Page Type: </b>
+                        {{ predefinedlinklist.pageType}}
+                        <br><b>Destination: </b>
+                        {{ predefinedlinklist.destination}}
+                        <br><b>Domain: </b>
+                        {{ predefinedlinklist.domain}}
+                    </td>
+                </tr>
+            </ng-template>
+        
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8">
+                        <h3 class="text-center">No Result found.</h3>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        <div>
+            <p-button styleClass="p-button-rounded p-button-outlined"
+            (click)="cancelPredefinedDialog()" label="Cancel"></p-button> &nbsp;
+            <p-button styleClass="p-button-rounded" (click)="selectpredefinedLinkListValue(selectedPredefinedList)"
+                label="Continue"></p-button>
+           
+        </div>
+
+    </div> -->
+
+<p-toast></p-toast>
+<!-- Alert Dialog for the links-->
+<p-dialog [modal]="true" [(visible)]="showAlertDialog" [style]="{width: '30vw'}" [showHeader]="false" >
+    <p>
+        Before you can choose a link type, you’ll need to select the text that will be linked.
+    </p>
+    <p-button styleClass="p-button-rounded mt-2" (click)="closeAlertDialog()"
+            label="OK"></p-button>
+</p-dialog>
+
+<!-- Save Doc Error Dialog  -->
+<p-dialog [modal]="true" [(visible)]="saveDocError" [style]="{width: '50vw'}" [showHeader]="false" >
+    <p>
+        {{docErrorMessage}}
+    </p>
+    <p-button styleClass="p-button-rounded mt-2" (click)="saveDocError = false"
+            label="OK"></p-button>
+</p-dialog>
+
+<!-- button for copy copyToClipboard1() -->
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="copyUsingEditor()" id="copyButton" hidden>copy</p-button>
+
+<!-- button for paste (click)="insertTab()"pasteFromClipboard1-->
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button"
+(click)="pasteHTML()" id="pasteButton" hidden>paste</p-button>
+
+<p-button styleClass="margin-right: 3px;margin-left: 3px;"
+styleClass="p-button-outlined p-button-rounded" type="button" 
+id="tabButton" hidden>Add Tab</p-button>
+
+<!-- Modal for double click on adding document -->
+<p-dialog [modal]="true" [(visible)]="showdblclick" [style]="{width: '26vw'}" [showHeader]="false" >
+    <h3>Making Changes to This Link</h3>
+    <!-- <br> -->
+    <p>
+       To edit this link,go back to the section where it appears. Remove the link from that section, 
+        and then add a link with updated information.
+    </p>
+    <p-button styleClass="p-button-rounded mt-2" (click)="showdblclick = false"
+            label="Close"></p-button>
+</p-dialog>
+
+<!-- Modal for linking on already linked text -->
+<p-dialog [modal]="true" [(visible)]="isLinked" [style]="{width: '26vw'}" [showHeader]="false" >
+    <h3><strong>This Text Already Includes a Link</strong></h3>
+    <!-- <br> -->
+    <p>
+       Another link can't be added to it
+    </p>
+    <p-button styleClass="p-button-rounded mt-2" (click)="isLinked = false"
+            label="Close"></p-button>
+</p-dialog>
